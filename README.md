@@ -1,112 +1,112 @@
 # Gemi2Api-Server
-[HanaokaYuzu / Gemini-API](https://github.com/HanaokaYuzu/Gemini-API) 的服务端简单实现
+A simple server-side implementation of [HanaokaYuzu / Gemini-API](https://github.com/HanaokaYuzu/Gemini-API)
 
 [![pE79pPf.png](https://s21.ax1x.com/2025/04/28/pE79pPf.png)](https://imgse.com/i/pE79pPf)
 
-## 快捷部署
+## Quick Deployment
 
 ### Render
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/zhiyu1998/Gemi2Api-Server)
 
-### HuggingFace（由佬友@qqrr部署）
+### HuggingFace (Deployed by @qqrr)
 
 [![Deploy to HuggingFace](https://img.shields.io/badge/%E7%82%B9%E5%87%BB%E9%83%A8%E7%BD%B2-%F0%9F%A4%97-fff)](https://huggingface.co/spaces/ykl45/gmn2a)
 
-## 直接运行
+## Direct Run
 
-0. 填入 `SECURE_1PSID` 和 `SECURE_1PSIDTS`（登录 Gemini 在浏览器开发工具中查找 Cookie），有必要的话可以填写 `API_KEY`
+0. Fill in `SECURE_1PSID` and `SECURE_1PSIDTS` (find them in browser developer tools cookies after logging into Gemini), and optionally `API_KEY`.
 ```properties
 SECURE_1PSID = "COOKIE VALUE HERE"
 SECURE_1PSIDTS = "COOKIE VALUE HERE"
 API_KEY= "API_KEY VALUE HERE"
 ```
-1. `uv` 安装一下依赖
+1. Install dependencies with `uv`
 > uv init
 > 
 > uv add fastapi uvicorn gemini-webapi
 
 > [!NOTE]  
-> 如果存在`pyproject.toml` 那么就使用下面的命令：  
+> If `pyproject.toml` exists, use the following command:  
 > uv sync
 
-或者 `pip` 也可以
+Alternatively, `pip` can also be used:
 
 > pip install fastapi uvicorn gemini-webapi
 
-2. 激活一下环境
+2. Activate the environment
 > source venv/bin/activate
 
-3. 启动
+3. Start the server
 > uvicorn main:app --reload --host 127.0.0.1 --port 8000
 
 > [!WARNING] 
-> tips: 如果不填写 API_KEY ，那么就直接使用
+> tips: If API_KEY is not provided, it will be used directly.
 
-## 使用Docker运行（推荐）
+## Run with Docker (Recommended)
 
-### 快速开始
+### Quick Start
 
-1. 克隆本项目
+1. Clone this project
    ```bash
    git clone https://github.com/zhiyu1998/Gemi2Api-Server.git
    ```
 
-2. 创建 `.env` 文件并填入你的 Gemini Cookie 凭据:
+2. Create a `.env` file and fill in your Gemini Cookie credentials:
    ```bash
    cp .env.example .env
-   # 用编辑器打开 .env 文件，填入你的 Cookie 值
+   # Open the .env file with an editor and fill in your Cookie values
    ```
 
-3. 启动服务:
+3. Start the service:
    ```bash
    docker-compose up -d
    ```
 
-4. 服务将在 http://0.0.0.0:8000 上运行
+4. The service will be running on http://0.0.0.0:8000
 
-### 其他 Docker 命令
+### Other Docker Commands
 
 ```bash
-# 查看日志
+# View logs
 docker-compose logs
 
-# 重启服务
+# Restart service
 docker-compose restart
 
-# 停止服务
+# Stop service
 docker-compose down
 
-# 重新构建并启动
+# Rebuild and start
 docker-compose up -d --build
 ```
 
-## API端点
+## API Endpoints
 
-- `GET /`: 服务状态检查
-- `GET /v1/models`: 获取可用模型列表
-- `POST /v1/chat/completions`: 与模型聊天 (类似OpenAI接口)
+- `GET /`: Service status check
+- `GET /v1/models`: Get list of available models
+- `POST /v1/chat/completions`: Chat with the model (similar to OpenAI interface)
 
-## 常见问题
+## Common Issues
 
-### 服务器报 500 问题解决方案
+### Server 500 Error Solution
 
-500 的问题一般是 IP 不太行 或者 请求太频繁（后者等待一段时间或者重新新建一个隐身标签登录一下重新给 Secure_1PSID 和 Secure_1PSIDTS 即可），见 issue：
+500 errors are generally due to IP issues or too frequent requests (for the latter, wait for a while or log in again with a new incognito tab to get new Secure_1PSID and Secure_1PSIDTS). See issues:
 - [__Secure-1PSIDTS · Issue #6 · HanaokaYuzu/Gemini-API](https://github.com/HanaokaYuzu/Gemini-API/issues/6)
 - [Failed to initialize client. SECURE_1PSIDTS could get expired frequently · Issue #72 · HanaokaYuzu/Gemini-API](https://github.com/HanaokaYuzu/Gemini-API/issues/72)
 
-解决步骤：
-1. 使用隐身标签访问 [Google Gemini](https://gemini.google.com/) 并登录
-2. 打开浏览器开发工具 (F12)
-3. 切换到 "Application" 或 "应用程序" 标签
-4. 在左侧找到 "Cookies" > "gemini.google.com"
-5. 复制 `__Secure-1PSID` 和 `__Secure-1PSIDTS` 的值
-6. 更新 `.env` 文件
-7. 重新构建并启动: `docker-compose up -d --build`
+Solution steps:
+1. Access [Google Gemini](https://gemini.google.com/) in an incognito tab and log in.
+2. Open browser developer tools (F12).
+3. Switch to the "Application" tab.
+4. Find "Cookies" > "gemini.google.com" on the left.
+5. Copy the values of `__Secure-1PSID` and `__Secure-1PSIDTS`.
+6. Update the `.env` file.
+7. Rebuild and start: `docker-compose up -d --build`
 
-## 贡献
+## Contributions
 
-同时感谢以下开发者对 `Gemi2Api-Server` 作出的贡献：
+Thanks to the following developers for their contributions to `Gemi2Api-Server`:
 
 <a href="https://github.com/zhiyu1998/Gemi2Api-Server/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=zhiyu1998/Gemi2Api-Server&max=1000" />
