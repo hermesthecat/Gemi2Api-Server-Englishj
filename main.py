@@ -22,7 +22,7 @@ from gemini_webapi.constants import Model
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-set_log_level("INFO")
+set_log_level("DEBUG")  # Set to DEBUG for detailed logs, or INFO for less verbose output
 
 app = FastAPI(title="Gemini API FastAPI Server")
 
@@ -65,7 +65,7 @@ else:
 
 def correct_markdown(md_text: str) -> str:
 	"""
-	修正Markdown文本，移除Google搜索链接包装器，并根据显示文本简化目标URL。
+	Corrects Markdown text, removes Google search link wrappers, and simplifies target URLs based on display text.
 	"""
 	def simplify_link_target(text_content: str) -> str:
 		match_colon_num = re.match(r"([^:]+:\d+)", text_content)
@@ -187,11 +187,11 @@ async def error_handling(request: Request, call_next):
 # Get list of available models
 @app.get("/v1/models")
 async def list_models():
-	"""返回 gemini_webapi 中声明的模型列表"""
+	"""Returns a list of models declared in gemini_webapi"""
 	now = int(datetime.now(tz=timezone.utc).timestamp())
 	data = [
 		{
-			"id": m.model_name,  # 如 "gemini-2.0-flash"
+			"id": m.model_name,  # e.g., "gemini-2.0-flash"
 			"object": "model",
 			"created": now,
 			"owned_by": "google-gemini-web",
@@ -204,18 +204,18 @@ async def list_models():
 
 # Helper to convert between Gemini and OpenAI model names
 def map_model_name(openai_model_name: str) -> Model:
-	"""根据模型名称字符串查找匹配的 Model 枚举值"""
-	# 打印所有可用模型以便调试
+	"""Finds the matching Model enum value based on the model name string"""
+	# Print all available models for debugging
 	all_models = [m.model_name if hasattr(m, "model_name") else str(m) for m in Model]
 	logger.info(f"Available models: {all_models}")
 
-	# 首先尝试直接查找匹配的模型名称
+	# First, try to directly find the matching model name
 	for m in Model:
 		model_name = m.model_name if hasattr(m, "model_name") else str(m)
 		if openai_model_name.lower() in model_name.lower():
 			return m
 
-	# 如果找不到匹配项，使用默认映射
+	# If no match is found, use default mapping
 	model_keywords = {
 		"gemini-pro": ["pro", "2.0"],
 		"gemini-pro-vision": ["vision", "pro"],
@@ -224,15 +224,15 @@ def map_model_name(openai_model_name: str) -> Model:
 		"gemini-1.5-flash": ["1.5", "flash"],
 	}
 
-	# 根据关键词匹配
-	keywords = model_keywords.get(openai_model_name, ["pro"])  # 默认使用pro模型
+	# Match by keywords
+	keywords = model_keywords.get(openai_model_name, ["pro"])  # Default to pro model
 
 	for m in Model:
 		model_name = m.model_name if hasattr(m, "model_name") else str(m)
 		if all(kw.lower() in model_name.lower() for kw in keywords):
 			return m
 
-	# 如果还是找不到，返回第一个模型
+	# If still not found, return the first model
 	return next(iter(Model))
 
 
@@ -303,23 +303,23 @@ async def get_gemini_client():
 @app.post("/v1/chat/completions")
 async def create_chat_completion(request: ChatCompletionRequest, api_key: str = Depends(verify_api_key)):
 	try:
-		# 确保客户端已初始化
+		# Ensure client is initialized
 		global gemini_client
 		if gemini_client is None:
 			gemini_client = GeminiClient(SECURE_1PSID, SECURE_1PSIDTS)
 			await gemini_client.init(timeout=300)
 			logger.info("Gemini client initialized successfully")
 
-		# 转换消息为对话格式
+		# Convert messages to conversation format
 		conversation, temp_files = prepare_conversation(request.messages)
 		logger.info(f"Prepared conversation: {conversation}")
 		logger.info(f"Temp files: {temp_files}")
 
-		# 获取适当的模型
+		# Get appropriate model
 		model = map_model_name(request.model)
 		logger.info(f"Using model: {model}")
 
-		# 生成响应
+		# Generate response
 		logger.info("Sending request to Gemini...")
 		if temp_files:
 			# With files
@@ -328,16 +328,16 @@ async def create_chat_completion(request: ChatCompletionRequest, api_key: str = 
 			# Text only
 			response = await gemini_client.generate_content(conversation, model=model)
 
-		# 清理临时文件
+		# Clean up temporary files
 		for temp_file in temp_files:
 			try:
 				os.unlink(temp_file)
 			except Exception as e:
 				logger.warning(f"Failed to delete temp file {temp_file}: {str(e)}")
 
-		# 提取文本响应
+		# Extract text response
 		reply_text = ""
-		# 提取思考内容
+		# Extract thoughts content
 		if hasattr(response, "thoughts"):
 		    reply_text += f"<think>{response.thoughts}</think>"
 		if hasattr(response, "text"):
@@ -351,18 +351,18 @@ async def create_chat_completion(request: ChatCompletionRequest, api_key: str = 
 
 		if not reply_text or reply_text.strip() == "":
 			logger.warning("Empty response received from Gemini")
-			reply_text = "服务器返回了空响应。请检查 Gemini API 凭据是否有效。"
+			reply_text = "The server returned an empty response. Please check if your Gemini API credentials are valid."
 
-		# 创建响应对象
+		# Create response object
 		completion_id = f"chatcmpl-{uuid.uuid4()}"
 		created_time = int(time.time())
 
-		# 检查客户端是否请求流式响应
+		# Check if client requested streaming response
 		if request.stream:
-			# 实现流式响应
+			# Implement streaming response
 			async def generate_stream():
-				# 创建 SSE 格式的流式响应
-				# 先发送开始事件
+				# Create SSE formatted streaming response
+				# First send the start event
 				data = {
 					"id": completion_id,
 					"object": "chat.completion.chunk",
@@ -372,7 +372,7 @@ async def create_chat_completion(request: ChatCompletionRequest, api_key: str = 
 				}
 				yield f"data: {json.dumps(data)}\n\n"
 
-				# 模拟流式输出 - 将文本按字符分割发送
+				# Simulate streaming output - send text character by character
 				for char in reply_text:
 					data = {
 						"id": completion_id,
@@ -382,10 +382,10 @@ async def create_chat_completion(request: ChatCompletionRequest, api_key: str = 
 						"choices": [{"index": 0, "delta": {"content": char}, "finish_reason": None}],
 					}
 					yield f"data: {json.dumps(data)}\n\n"
-					# 可选：添加短暂延迟以模拟真实的流式输出
+					# Optional: add a short delay to simulate real streaming output
 					await asyncio.sleep(0.01)
 
-				# 发送结束事件
+				# Send end event
 				data = {
 					"id": completion_id,
 					"object": "chat.completion.chunk",
@@ -398,7 +398,7 @@ async def create_chat_completion(request: ChatCompletionRequest, api_key: str = 
 
 			return StreamingResponse(generate_stream(), media_type="text/event-stream")
 		else:
-			# 非流式响应（原来的逻辑）
+			# Non-streaming response (original logic)
 			result = {
 				"id": completion_id,
 				"object": "chat.completion",
